@@ -17,24 +17,22 @@
     <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- Tools -->
+    <!-- Tooling versions -->
     <openapi.generator.version>7.8.0</openapi.generator.version>
+    <exec-maven-plugin.version>3.3.0</exec-maven-plugin.version>
+    <openapi-generator-cli.version>7.8.0</openapi-generator-cli.version>
 
-    <!-- Swagger Core (Jakarta) -->
+    <!-- Libraries -->
     <swagger.core.version>2.2.22</swagger.core.version>
-
-    <!-- Jackson -->
     <jackson.version>2.17.2</jackson.version>
-
-    <!-- Jersey 3.x (Jakarta) -->
     <jersey.version>3.1.6</jersey.version>
 
-    <!-- Project-local output (not target) -->
+    <!-- Project-local output (not target) for server contract generation -->
     <openapi.output.dir>${project.basedir}/generated-sources</openapi.output.dir>
   </properties>
 
   <dependencies>
-    <!-- Jakarta EE API (Servlet/JAX-RS annotations). Provided by container or compile-only. -->
+    <!-- Jakarta EE API (Servlet/JAX-RS annotations) -->
     <dependency>
       <groupId>jakarta.platform</groupId>
       <artifactId>jakarta.jakartaee-api</artifactId>
@@ -109,7 +107,7 @@
   <build>
     <finalName>jakartaee-openapi-server</finalName>
     <plugins>
-      <!-- Ensure the generated folder is removed on 'mvn clean' -->
+      <!-- Clean the generated folder on 'mvn clean' -->
       <plugin>
         <artifactId>maven-clean-plugin</artifactId>
         <version>3.3.2</version>
@@ -123,7 +121,7 @@
         </configuration>
       </plugin>
 
-      <!-- Pre-generate cleanup: delete generated folder before codegen even if 'clean' wasn't run -->
+      <!-- Pre-generate cleanup: ensures a fresh contract generation even without running 'clean' -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -137,14 +135,12 @@
                 <delete dir="${openapi.output.dir}" quiet="true"/>
               </target>
             </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
+            <goals><goal>run</goal></goals>
           </execution>
         </executions>
       </plugin>
 
-      <!-- OpenAPI Generator: generate only APIs and Models (no supporting files like impl/factories) -->
+      <!-- OpenAPI Generator: generate only APIs and Models for the server (no impl/factories) -->
       <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
@@ -152,29 +148,24 @@
         <executions>
           <execution>
             <id>generate-contracts</id>
-            <goals>
-              <goal>generate</goal>
-            </goals>
+            <goals><goal>generate</goal></goals>
             <configuration>
               <inputSpec>${project.basedir}/src/main/resources/openapi.json</inputSpec>
-
-              <!-- For Jersey server templates; for pure contracts you could switch to jaxrs-spec -->
+              <!-- To generate contracts only with Jersey templates; alternatively use 'jaxrs-spec' and remove <library> -->
               <generatorName>jaxrs-jersey</generatorName>
-              <!-- Alternative: <generatorName>jaxrs-spec</generatorName> and remove <library> -->
               <output>${openapi.output.dir}</output>
 
               <apiPackage>com.example.api</apiPackage>
               <modelPackage>com.example.model</modelPackage>
               <invokerPackage>com.example.invoker</invokerPackage>
 
-              <!-- Generate only APIs and Models -->
               <apis>true</apis>
               <models>true</models>
               <supportingFiles>false</supportingFiles>
 
               <configOptions>
                 <useJakartaEe>true</useJakartaEe>
-                <library>jersey3</library> <!-- remove if using jaxrs-spec -->
+                <library>jersey3</library>
                 <interfaceOnly>true</interfaceOnly>
                 <useBeanValidation>true</useBeanValidation>
                 <dateLibrary>java8</dateLibrary>
@@ -202,14 +193,12 @@
                 <delete dir="${openapi.output.dir}/src/main/java/com/example/api/impl" quiet="true"/>
               </target>
             </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
+            <goals><goal>run</goal></goals>
           </execution>
         </executions>
       </plugin>
 
-      <!-- Add only the generated APIs/Models to compilation -->
+      <!-- Add only the generated API/model sources to compilation -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -218,9 +207,7 @@
           <execution>
             <id>add-generated-sources</id>
             <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
+            <goals><goal>add-source</goal></goals>
             <configuration>
               <sources>
                 <source>${openapi.output.dir}/src/gen/java</source>
@@ -228,6 +215,44 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- OpenAPI Generator CLI via exec: generate Java SDK from src/main/resources/openapi.json (Option A) -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>${exec-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>generate-java-sdk</id>
+            <phase>package</phase>
+            <goals><goal>java</goal></goals>
+            <configuration>
+              <mainClass>org.openapitools.codegen.OpenAPIGenerator</mainClass>
+              <arguments>
+                <argument>generate</argument>
+                <argument>-i</argument>
+                <argument>${project.basedir}/src/main/resources/openapi.json</argument>
+                <argument>-g</argument>
+                <argument>java</argument>
+                <argument>-o</argument>
+                <argument>${project.build.directory}/sdk</argument>
+                <argument>--skip-validate-spec</argument>
+                <argument>-c</argument>
+                <argument>${project.basedir}/swagger-config.json</argument>
+              </arguments>
+              <includeProjectDependencies>true</includeProjectDependencies>
+              <includePluginDependencies>true</includePluginDependencies>
+            </configuration>
+        </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>openapi-generator-cli</artifactId>
+            <version>${openapi-generator-cli.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
 
       <!-- Java 21 compiler -->

@@ -1,0 +1,17 @@
+{
+  "generatorName": "java",
+  "library": "feign",
+  "useJakartaEe": true,
+  "dateLibrary": "java8",
+  "serializableModel": true,
+  "hideGenerationTimestamp": true,
+  "disallowAdditionalPropertiesIfNotPresent": true,
+  "withSeparateModelsAndApi": true,
+  "booleanGetterPrefix": "is",
+  "groupId": "com.example",
+  "artifactId": "example-client-feign",
+  "artifactVersion": "1.0.0",
+  "apiPackage": "com.example.client.api",
+  "modelPackage": "com.example.client.model",
+  "invokerPackage": "com.example.client.invoker"
+}
