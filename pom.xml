@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>jakartaee-openapi-server</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <name>jakartaee-openapi-server</name>
+  <description>Jakarta EE (Java 21) JAX-RS server generated from OpenAPI JSON using OpenAPI Generator, with Swagger v3 annotations</description>
+
+  <properties>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Tools -->
+    <openapi.generator.version>7.8.0</openapi.generator.version>
+
+    <!-- Swagger Core (Jakarta) -->
+    <swagger.core.version>2.2.22</swagger.core.version>
+
+    <!-- Jackson -->
+    <jackson.version>2.17.2</jackson.version>
+
+    <!-- Jersey 3.x (Jakarta) -->
+    <jersey.version>3.1.6</jersey.version>
+
+    <!-- Project-local output (not target) -->
+    <openapi.output.dir>${project.basedir}/generated-sources</openapi.output.dir>
+  </properties>
+
+  <dependencies>
+    <!-- Jakarta EE API (Servlet/JAX-RS annotations). Provided by container or compile-only. -->
+    <dependency>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
+      <version>10.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Jersey runtime for Tomcat (JAX-RS implementation) -->
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-server</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.containers</groupId>
+      <artifactId>jersey-container-servlet</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.inject</groupId>
+      <artifactId>jersey-hk2</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+
+    <!-- Optional: multipart support if referenced by generated code -->
+    <dependency>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-multipart</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+
+    <!-- Swagger/OpenAPI v3 (Jakarta) -->
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations-jakarta</artifactId>
+      <version>${swagger.core.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-models-jakarta</artifactId>
+      <version>${swagger.core.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-jaxrs2-jakarta</artifactId>
+      <version>${swagger.core.version}</version>
+    </dependency>
+
+    <!-- Jackson (core + JavaTime + Jakarta RS provider) -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.jakarta.rs</groupId>
+      <artifactId>jackson-jakarta-rs-json-provider</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>jakartaee-openapi-server</finalName>
+    <plugins>
+      <!-- Ensure the generated folder is removed on 'mvn clean' -->
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.3.2</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>${openapi.output.dir}</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+
+      <!-- Pre-generate cleanup: delete generated folder before codegen even if 'clean' wasn't run -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>pre-clean-generated-folder</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <target>
+                <delete dir="${openapi.output.dir}" quiet="true"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- OpenAPI Generator: generate only APIs and Models (no supporting files like impl/factories) -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>${openapi.generator.version}</version>
+        <executions>
+          <execution>
+            <id>generate-contracts</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/openapi.json</inputSpec>
+
+              <!-- For Jersey server templates; for pure contracts you could switch to jaxrs-spec -->
+              <generatorName>jaxrs-jersey</generatorName>
+              <!-- Alternative: <generatorName>jaxrs-spec</generatorName> and remove <library> -->
+              <output>${openapi.output.dir}</output>
+
+              <apiPackage>com.example.api</apiPackage>
+              <modelPackage>com.example.model</modelPackage>
+              <invokerPackage>com.example.invoker</invokerPackage>
+
+              <!-- Generate only APIs and Models -->
+              <apis>true</apis>
+              <models>true</models>
+              <supportingFiles>false</supportingFiles>
+
+              <configOptions>
+                <useJakartaEe>true</useJakartaEe>
+                <library>jersey3</library> <!-- remove if using jaxrs-spec -->
+                <interfaceOnly>true</interfaceOnly>
+                <useBeanValidation>true</useBeanValidation>
+                <dateLibrary>java8</dateLibrary>
+                <generateSupportingFiles>false</generateSupportingFiles>
+              </configOptions>
+
+              <skipOverwrite>false</skipOverwrite>
+              <generateAliasAsModel>false</generateAliasAsModel>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Optional safeguard: delete any generated impl/factory folders if templates still write them -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>cleanup-generated-impls</id>
+            <phase>process-sources</phase>
+            <configuration>
+              <target>
+                <delete dir="${openapi.output.dir}/src/main/java/com/example/api/impl" quiet="true"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Add only the generated APIs/Models to compilation -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>add-generated-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${openapi.output.dir}/src/gen/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Java 21 compiler -->
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <release>21</release>
+        </configuration>
+      </plugin>
+
+      <!-- WAR packaging -->
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
