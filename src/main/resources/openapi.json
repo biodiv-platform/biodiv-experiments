@@ -72,6 +72,46 @@
           }
         }
       }
+    },
+    "/map": {
+      "get": {
+        "operationId": "getMap",
+        "responses": {
+          "200": {
+            "description": "A map of string keys to string values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mapObject": {
+      "get": {
+        "operationId": "getMapObject",
+        "responses": {
+          "200": {
+            "description": "A map of string keys to object values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
