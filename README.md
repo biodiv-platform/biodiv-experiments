@@ -15,16 +15,9 @@ mvn clean generate-sources
 ## Build WAR
 mvn package
 
-## Run (WildFly example)
-- Start: bin/standalone.sh
-- Deploy: copy target/jakartaee-openapi-server.war to standalone/deployments/
-- Test:
-  - GET  http://localhost:8080/jakartaee-openapi-server/hello
-  - POST http://localhost:8080/jakartaee-openapi-server/greet  (JSON: {"name":"Alice"})
+## deploy_api.sh
+modify paths in this file, this will cleanup/remove deployed api and logs in tomcat server
+you can update it not remove old api data
 
-Notes:
-- Swagger v3 annotations are on impl classes:
-  - com.example.impl.HelloApiImpl
-  - com.example.impl.GreetApiImpl
-- Dependency io.swagger.core.v3:swagger-annotations-jakarta is added (provided).
-- If you use a runtime that can serve Swagger UI, add it separately (server-specific).
+## swagger-ui
+http://localhost:8080/jakartaee-openapi-server/swagger-ui
